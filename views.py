@@ -2,6 +2,7 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
@@ -102,26 +103,46 @@ def parse_response(request):
       
     return response_data
 
+def login_user(google_user):
+    user = User.objects.get(password=google_user['user_id'])
+    user.backend = 'django.contrib.auth.backends.ModelBackend'
+
+    return user
+
+def create_user(google_user):
+    try:
+        user = User.objects.create(username=google_user['nickname'].split('@', 1)[0], password=google_user['user_id'], email=google_user['email'], is_staff=google_user['is_admin'], is_superuser=google_user['is_admin'], first_name='', last_name='')
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+
+    except IntegrityError:
+        try:
+            user = User.objects.create(username=google_user['nickname'], password=google_user['user_id'], email=google_user['email'], is_staff=google_user['is_admin'], is_superuser=google_user['is_admin'], first_name='', last_name='')
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
+
+        except IntegrityError:
+            user = User.objects.create(username=google_user['email'], password=google_user['user_id'], email=google_user['email'], is_staff=google_user['is_admin'], is_superuser=google_user['is_admin'], first_name='', last_name='')
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
+
+    return user
+
 def view_login(request):
     google_user = parse_response(request)
-    
+
     if isinstance(google_user, HttpResponse):
         return google_user
 
     try:
-        user = User.objects.get(password=google_user['user_id'])
-        user.backend = 'django.contrib.auth.backends.ModelBackend'
-        
+        user = login_user(google_user)
+
     except User.DoesNotExist:
-        user = User.objects.create(username=google_user['nickname'].split('@', 1)[0], password=google_user['user_id'], email=google_user['email'], is_staff=google_user['is_admin'], is_superuser=google_user['is_admin'], first_name='', last_name='')
-        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        user = create_user(google_user)
 
     if user:
         login(request, user)
-        
+
     return HttpResponseRedirect(getattr(settings, 'LOGIN_REDIRECT_URL', '/'))
     
 def view_logout(request):
     logout(request)
-    
+
     return HttpResponseRedirect(getattr(settings, 'LOGOUT_REDIRECT_URL', '/'))
