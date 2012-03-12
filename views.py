@@ -31,7 +31,7 @@ def redirect_request(request):
     req = pickle.dumps(request_data)
     sig = SHA256.new(req).digest()
     
-    enc_req = REMOTE_KEY.encrypt(req, RNG)
+    enc_req = REMOTE_KEY.encrypt(req, RNG)[0]
     enc_sig = PRIVATE_KEY.sign(sig, RNG)
     
     pkl_req = base64.b64encode(enc_req)
@@ -76,7 +76,7 @@ def parse_response(request):
     if not enc_rsp or not enc_sig:
         return redirect_request(request)
     
-    rsp = PRIVATE_KEY.decrypt(enc_rsp)
+    rsp = PRIVATE_KEY.decrypt((enc_rsp,))
     sig = SHA256.new(rsp).digest()
     
     if not REMOTE_KEY.verify(sig, enc_sig):
