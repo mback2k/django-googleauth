@@ -34,8 +34,8 @@ def redirect_request(request):
     enc_req = REMOTE_KEY.encrypt(req, RNG)
     enc_sig = PRIVATE_KEY.sign(sig, RNG)
     
-    pkl_req = json.dumps(enc_req, ensure_ascii=False)
-    pkl_sig = json.dumps(enc_sig, ensure_ascii=False)
+    pkl_req = base64.b64encode(enc_req)
+    pkl_sig = json.dumps(enc_sig)
     
     gzp_req = zlib.compress(pkl_req, 9)
     gzp_sig = zlib.compress(pkl_sig, 9)
@@ -70,7 +70,7 @@ def parse_response(request):
     if not pkl_rsp or not pkl_sig:
         return redirect_request(request)
       
-    enc_rsp = json.loads(pkl_rsp)
+    enc_rsp = base64.b64decode(pkl_rsp)
     enc_sig = json.loads(pkl_sig)
     
     if not enc_rsp or not enc_sig:
