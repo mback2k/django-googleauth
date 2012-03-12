@@ -34,8 +34,8 @@ def redirect_request(request):
     enc_req = REMOTE_KEY.encrypt(req, RNG)
     enc_sig = PRIVATE_KEY.sign(sig, RNG)
     
-    pkl_req = json.dumps(enc_req, ensure_ascii=True)
-    pkl_sig = json.dumps(enc_sig, ensure_ascii=True)
+    pkl_req = json.dumps(enc_req, ensure_ascii=False)
+    pkl_sig = json.dumps(enc_sig, ensure_ascii=False)
     
     gzp_req = zlib.compress(pkl_req, 9)
     gzp_sig = zlib.compress(pkl_sig, 9)
