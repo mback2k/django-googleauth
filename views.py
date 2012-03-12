@@ -9,6 +9,7 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 
 import time
+import json
 import zlib
 import base64
 import pickle
@@ -33,8 +34,8 @@ def redirect_request(request):
     enc_req = REMOTE_KEY.encrypt(req, RNG)
     enc_sig = PRIVATE_KEY.sign(sig, RNG)
     
-    pkl_req = pickle.dumps(enc_req)
-    pkl_sig = pickle.dumps(enc_sig)
+    pkl_req = json.dumps(enc_req)
+    pkl_sig = json.dumps(enc_sig)
     
     gzp_req = zlib.compress(pkl_req, 9)
     gzp_sig = zlib.compress(pkl_sig, 9)
@@ -69,8 +70,8 @@ def parse_response(request):
     if not pkl_rsp or not pkl_sig:
         return redirect_request(request)
       
-    enc_rsp = pickle.loads(pkl_rsp)
-    enc_sig = pickle.loads(pkl_sig)
+    enc_rsp = json.loads(pkl_rsp)
+    enc_sig = json.loads(pkl_sig)
     
     if not enc_rsp or not enc_sig:
         return redirect_request(request)
